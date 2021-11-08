@@ -27,14 +27,16 @@ def connect_chrome(path, url, is_watch = True):
 
     # WebDriver のオプションを設定する
     options = webdriver.ChromeOptions()
+    global d
     if is_watch:
         options.add_argument('--headless')
-    d = webdriver.Chrome(executable_path=path, opetions = options)
+    d = webdriver.Chrome(executable_path=path, options = options)
 
     d.get(url)
-    time.sleep(1.0)
+    time.sleep(5.0)
+    return d
 
-def send_data(data, path, method = 0, serial=None, memo = None):
+def send_data(d, data, path, method = 0, serial=None, memo = None):
     
     """htmlにデータを送る
     0:xpath, 1:id, 2:class: 3:name
@@ -54,12 +56,10 @@ def send_data(data, path, method = 0, serial=None, memo = None):
     except:
         print(MSG_NOT_FOUD_ELEMENT % path)
         return
-    if len(element) > 1 and serial != None:
-        element = element[serial]
     
     element.send_keys(data)
 
-def click_with_update(path, method = 0, is_check = False, span_time = 1.0, memo = None):
+def click_with_update(d, path, method = XPATH, is_check = False, span_time = 1.0, memo = None):
     """要素をクリック
     0:xpath, 1:id, 2:class: 3:name
     Args:
@@ -73,14 +73,13 @@ def click_with_update(path, method = 0, is_check = False, span_time = 1.0, memo 
         m = _select_method(method)
     except KeyError:
         print(MSG_NOT_EXIST_METHOD)
-    try:
-        d.fine_element(m, path).click()
-    except:
-        print(MSG_NOT_FOUD_ELEMENT % path)
+
+    d.find_element(m, path).click()
+
     if not is_check:
         time.sleep(span_time)
         
-def select_drop(data,path,method=0,select_by=0,memo=None):
+def select_drop(d, data,path,method=0,select_by=0,memo=None):
     """ドロップダウンから選択する
     method -> 0:xpath, 1:id, 2:class, 3:name
     select_by -> 0:index, 1:value, 2:text
@@ -95,10 +94,9 @@ def select_drop(data,path,method=0,select_by=0,memo=None):
         m = _select_method(method)
     except KeyError:
         print(MSG_NOT_EXIST_METHOD)
-    try:
-        select_obj = d.find_element(m,path)
-    except:
-        print(MSG_NOT_FOUD_ELEMENT % path)
+    
+    select_obj = d.find_element(m,path)
+
     select = Select(select_obj)
     _select_by(select,select_by,data)
     
@@ -144,6 +142,7 @@ def _select_by(select,method,value):
     if method == INDEX:
         return select.select_by_index(value)
     elif method == VALUE:
+        print("select by value to " + value)
         select.select_by_value(value)
     elif method == TEXT:
-        select.select_by_text(value)
+        select.select_by_visible_text(value)
