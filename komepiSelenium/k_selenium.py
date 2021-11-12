@@ -16,13 +16,16 @@ VALUE = 1
 TEXT = 2
 SELECT_LIST = [INDEX, VALUE, TEXT]
 
-def connect_chrome(path, url, is_watch = True):
+def connect_chrome(path: str, url: str, is_watch: bool = True):
     """クロームに接続する
 
     Args:
         path (str): クロームのウェブドライバーがあるパス
         url (str): 最初に接続するURL
-        is_watch (bool, optional): 実際に動いているところを見るか. Defaults to True.
+        is_watch (bool, optional): ブラウザ立ち上げの有無（True:立ち上げない, False:立ち上げる). Defaults to True.
+    
+    Returns:
+        webdriver: 使用するウェブドライバー
     """
 
     # WebDriver のオプションを設定する
@@ -36,11 +39,12 @@ def connect_chrome(path, url, is_watch = True):
     time.sleep(5.0)
     return d
 
-def send_data(d, data, path, method = 0, serial=None, memo = None):
+def send_data(d: webdriver, data: str, path: str, method: int, serial: int = None, memo = None):
     
     """htmlにデータを送る
     0:xpath, 1:id, 2:class: 3:name
     Args:
+        d (webdriver): 使用するウェブドライバー
         data (str): 送るデータ
         path (str): 要素を検索するデータ
         method (int, optional): 検索手法. Defaults to 0.
@@ -59,10 +63,11 @@ def send_data(d, data, path, method = 0, serial=None, memo = None):
     
     element.send_keys(data)
 
-def click_with_update(d, path, method = XPATH, is_check = False, span_time = 1.0, memo = None):
+def click(d: webdriver, path: str, method: int, memo = None):
     """要素をクリック
     0:xpath, 1:id, 2:class: 3:name
     Args:
+        d (webdriver): 使用するウェブドライバー
         path (str): 要素を検索するデータ
         method (int, optional): 検索手法. Defaults to 0.
         is_check (bool, optional): チェック（読み込みがない）か否か True:チェック, False:チェックでない. Defaults to False.
@@ -76,19 +81,30 @@ def click_with_update(d, path, method = XPATH, is_check = False, span_time = 1.0
 
     d.find_element(m, path).click()
 
-    if not is_check:
-        time.sleep(span_time)
-        
-def select_drop(d, data,path,method=0,select_by=0,memo=None):
+def click_with_update(d: webdriver, path: str, method: int, span_time: float = 1.0, memo: str = None)
+    """要素を読み込みありでクリック
+    
+    Args:
+        d (webdriver): 使用するウェブドライバー
+        path (str): 要素を検索するデータ
+        method (int): 検索手法
+        span_time (float): 待機時間. Defaults to 1.0.
+        memo (str): 何をクリックしたかのメモ用（処理では使わない）
+     """
+    click(d, path, method)
+    time.sleep(span_time)
+    
+def select_drop(d: webdriver, data: obj, path: str, method: int, select_by: int, memo: str = None):
     """ドロップダウンから選択する
     method -> 0:xpath, 1:id, 2:class, 3:name
     select_by -> 0:index, 1:value, 2:text
     Args:
+        d (webdriver): 使用するウェブドライバー
         data (obj): 選択に用いるデータ
         path (str): 要素を検索するデータ
-        method (int, optional): 検索手法. Defaults to 0.
-        select_by (int, optional): 選択手法. Defaults to 0.
-        memo (str, optional): 何を選択したかメモ用. Defaults to None.
+        method (int, optional): 検索手法.
+        select_by (int, optional): 選択手法.
+        memo (str, optional): 何を選択したかメモ用(処理には使わない). Defaults to None.
     """
     try:
         m = _select_method(method)
@@ -100,7 +116,7 @@ def select_drop(d, data,path,method=0,select_by=0,memo=None):
     select = Select(select_obj)
     _select_by(select,select_by,data)
     
-def _select_method(method):
+def _select_method(method: int):
     """検索手法を探す
 
     Args:
@@ -125,7 +141,7 @@ def _select_method(method):
 
     return m
 
-def _select_by(select,method,value):
+def _select_by(select: Select, method: int, value: obj):
     """選択する
 
     Args:
